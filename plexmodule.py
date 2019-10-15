@@ -240,3 +240,16 @@ def get_watched_episodes_for_show_season(
 
     #logger.info('[PLEX] %s episodes watched for season: %s' % (episodes_watched, watched_season))
     return episodes_watched
+def get_season_year(
+        shows, watched_show_title, watched_season):
+    logger.info(
+        '[PLEX] Retrieving season year for show: %s | season: %s' %
+        (watched_show_title, watched_season))
+    episodes_year = 0
+    for show in shows:
+        if show.title.lower().strip() == watched_show_title.lower().strip():
+            episodes_year = show.season(watched_season).episode(episode=1).originallyAvailableAt
+            episodes_year = episodes_year.year
+
+    #logger.info('[PLEX] %s episodes watched for season: %s' % (episodes_watched, watched_season))
+    return episodes_year

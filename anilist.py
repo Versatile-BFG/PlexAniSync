@@ -75,6 +75,7 @@ class anilist_series:
             episodes,
             title_english,
             title_romaji,
+            synonyms,
             started_year,
             ended_year):
         self.id = id
@@ -88,6 +89,7 @@ class anilist_series:
         self.episodes = episodes
         self.title_english = title_english
         self.title_romaji = title_romaji
+        self.synonyms = synonyms
         self.started_year = started_year
         self.ended_year = ended_year
 
@@ -246,6 +248,7 @@ def fetch_user_list(username):
                     english
                     native
                 }
+                synonyms
                 }
             }
             }
@@ -349,6 +352,7 @@ def mediaitem_to_object(media_item):
     episodes = ''
     title_english = ''
     title_romaji = ''
+    synonyms = ''
     started_year = ''
     ended_year = ''
 
@@ -372,6 +376,8 @@ def mediaitem_to_object(media_item):
         title_english = media_item.media.title.english
     if hasattr(media_item.media.title, 'romaji'):
         title_romaji = media_item.media.title.romaji
+    if hasattr(media_item.media, 'synonyms'):
+        synonyms = media_item.media.synonyms
     if hasattr(media_item.media.startDate, 'year'):
         started_year = media_item.media.startDate.year
     if hasattr(media_item.media.endDate, 'year'):
@@ -389,6 +395,7 @@ def mediaitem_to_object(media_item):
         episodes,
         title_english,
         title_romaji,
+        synonyms,
         started_year,
         ended_year)
     return series
@@ -406,6 +413,7 @@ def single_mediaitem_to_object(media_item):
     episodes = ''
     title_english = ''
     title_romaji = ''
+    synonyms = ''
     started_year = ''
     ended_year = ''
 
@@ -429,6 +437,8 @@ def single_mediaitem_to_object(media_item):
         title_english = media_item.Media.title.english
     if hasattr(media_item.Media.title, 'romaji'):
         title_romaji = media_item.Media.title.romaji
+    if hasattr(media_item.Media, 'synonyms'):
+        episodes = media_item.Media.synonyms
     if hasattr(media_item.Media.startDate, 'year'):
         started_year = media_item.Media.startDate.year
     if hasattr(media_item.Media.endDate, 'year'):
@@ -446,6 +456,7 @@ def single_mediaitem_to_object(media_item):
         episodes,
         title_english,
         title_romaji,
+        synonyms,
         started_year,
         ended_year)
     return series
@@ -510,6 +521,19 @@ def match_to_plex(
                                 '[^A-Za-z0-9]+', '', series.title_romaji).lower().strip()
                             if series_title_romaji_clean in potential_titles:
                                 found_match = True
+                    if series.synonyms and not found_match:
+                        for synonym in series.synonyms:
+                            if synonym.lower() in potential_titles:
+                                if (hasattr(series, 'started_year') and plex_year == series.started_year):
+                                    found_match = True
+                                    break
+                            else:
+                                synonym_clean = re.sub(
+                                    '[^A-Za-z0-9]+', '', synonym).lower().strip()
+                                if synonym_clean in potential_titles:
+                                    if (hasattr(series, 'started_year') and plex_year == series.started_year):
+                                        found_match = True
+                                        break
 
                 if found_match:
                     matched_anilist_series.append(series)
@@ -653,6 +677,8 @@ def match_series_with_seasons(
     while counter_season <= plex_total_seasons:
         plex_watched_episode_count = plexmodule.get_watched_episodes_for_show_season(
             plex_series_all, plex_title, counter_season)
+        plex_year = plexmodule.get_season_year(
+            plex_series_all, plex_title, counter_season)
         matched_anilist_series = []
         # for first season use regular search (some redundant codecan be merged
         # later)
@@ -693,6 +719,19 @@ def match_series_with_seasons(
                                 '[^A-Za-z0-9]+', '', series.title_romaji).lower().strip()
                             if series_title_romaji_clean in potential_titles:
                                 found_match = True
+                    if series.synonyms and not found_match:
+                        for synonym in series.synonyms:
+                            if synonym.lower() in potential_titles:
+                                if (hasattr(series, 'started_year') and plex_year == series.started_year):
+                                    found_match = True
+                                    break
+                            else:
+                                synonym_clean = re.sub(
+                                    '[^A-Za-z0-9]+', '', synonym).lower().strip()
+                                if synonym_clean in potential_titles:
+                                    if (hasattr(series, 'started_year') and plex_year == series.started_year):
+                                        found_match = True
+                                        break
 
                 if found_match:
                     matched_anilist_series.append(series)
@@ -835,8 +874,8 @@ def update_entry(
             if year != series.started_year:         
                 if ignore_year == False:
                     logger.error(
-                        '[ANILIST] Series year did not match (skipping update) => Plex has %s and AniList has %s' %
-                        (year, series.started_year))
+                        '[ANILIST] Series year did not match (skipping update) => Plex %s has %s and AniList %s has %s' %
+                        (title, year, series.title_romaji, series.started_year))
                     continue
                 elif ignore_year == True:
                     logger.info(
@@ -855,7 +894,7 @@ def update_entry(
                     anilist_total_episodes = int(series.episodes)
                 except BaseException:
                     logger.error(
-                        'Series has unknown total total episodes on AniList (not an Integer), will most likely not match up properly')
+                        'Series has unknown total episodes on AniList (not an Integer), will most likely not match up properly - returned %s' %(series.episodes))
                     anilist_total_episodes = 0
             else:
                 logger.error(
