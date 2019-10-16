@@ -438,7 +438,7 @@ def single_mediaitem_to_object(media_item):
     if hasattr(media_item.Media.title, 'romaji'):
         title_romaji = media_item.Media.title.romaji
     if hasattr(media_item.Media, 'synonyms'):
-        episodes = media_item.Media.synonyms
+        synonyms = media_item.Media.synonyms
     if hasattr(media_item.Media.startDate, 'year'):
         started_year = media_item.Media.startDate.year
     if hasattr(media_item.Media.endDate, 'year'):
