@@ -158,6 +158,24 @@ def get_watched_shows(shows):
 
         if hasattr(show, 'episodes'):
             for episode in show.episodes():
+                if episode.seasonNumber == 0:
+                    if episode.parentIndex == '0':
+                        try:
+                            plex_year = get_season_year(
+                                shows, show.title.strip(), 0, episode.index)
+                            ep_title = get_episodes_title(shows, show.title.strip(), 0, episode.index)
+                            logger.info('%s has Specials, year %s, episode title %s' %(show.title.strip(), plex_year, ep_title))
+                            if episode.isWatched:
+                                wtitle = '%s %s' %(show.title.strip(), ep_title.strip())
+                                watched_show = plex_watched_series(
+                                    wtitle, plex_year, 1, 1)
+                                watched_series.append(watched_show)
+                                #add_by_id(anilist_id, plex_title, plex_year, 1, 0):
+                        except Exception as e:
+                            logger.error(
+                                'Error during lookup_result processing, traceback: %s' %
+                                (e))
+                            pass
                 try:
                     # If season not defined set to season 1
                     season = 1 if not episode.seasonNumber else episode.seasonNumber
@@ -229,6 +247,7 @@ def get_watched_episodes_for_show_season(
             for episode in show.episodes():
                 try:
                     season = 1 if not episode.seasonNumber else episode.seasonNumber
+                    season = episode.seasonNumber
                     if season == watched_season:
                         if episode.isWatched:
                             episodes_watched += 1
@@ -241,15 +260,54 @@ def get_watched_episodes_for_show_season(
     #logger.info('[PLEX] %s episodes watched for season: %s' % (episodes_watched, watched_season))
     return episodes_watched
 def get_season_year(
-        shows, watched_show_title, watched_season):
-    logger.info(
-        '[PLEX] Retrieving season year for show: %s | season: %s' %
-        (watched_show_title, watched_season))
+        shows, watched_show_title, watched_season, watched_episode):
+    #logger.info(
+    #    '[PLEX] Retrieving season year for show: %s | season: %s' %
+    #    (watched_show_title, watched_season))
     episodes_year = 0
     for show in shows:
         if show.title.lower().strip() == watched_show_title.lower().strip():
-            episodes_year = show.season(watched_season).episode(episode=1).originallyAvailableAt
+            episodes_year = show.season(watched_season).episode(episode=watched_episode).originallyAvailableAt
             episodes_year = episodes_year.year
 
-    #logger.info('[PLEX] %s episodes watched for season: %s' % (episodes_watched, watched_season))
+    #logger.info('[PLEX] Season %s has a year of %s' % (watched_season, episodes_year))
     return episodes_year
+
+def get_episodes_title(
+        shows, watched_show_title, watched_season, watched_episode):
+    #logger.info(
+    #    '[PLEX] Retrieving episode title for show: %s | season: %s | episode: %s' %
+    #    (watched_show_title, watched_season, watched_episode))
+
+    for show in shows:
+        if show.title.lower().strip() == watched_show_title.lower().strip():
+            if show.title.lower().strip() == watched_show_title.lower().strip():
+                episodes_title = show.episode(season=watched_season,episode=watched_episode).title
+
+    #logger.info('[PLEX] %s episodes watched for season: %s' % (episodes_watched, watched_season))
+    return episodes_title
+
+def match_specials(
+        plex_series_all,
+        plex_title):
+    
+        for show in plex_series_all:
+            if show.title.lower().strip() == plex_title.lower().strip():
+                for episode in show.episodes():
+                    if episode.parentIndex == '0':
+                        try:
+                            plex_year = get_season_year(
+                                plex_series_all, plex_title, 0, episode.index)
+                            ep_title = get_episodes_title(plex_series_all, plex_title, 0, episode.index)
+                            logger.info('%s has Specials, year %s, episode title %s' %(plex_title, plex_year, ep_title))
+                            if episode.isWatched:
+                                wtitle = '%s %s' %(plex_title.strip(), ep_title.strip())
+                                watched_show = plex_watched_series(
+                                    wtitle, plex_year, '1', '1')
+                                logger.info(watched_show)
+                                #add_by_id(anilist_id, plex_title, plex_year, 1, 0):
+                        except Exception as e:
+                            logger.error(
+                                'Error during lookup_result processing, traceback: %s' %
+                                (e))
+                            pass

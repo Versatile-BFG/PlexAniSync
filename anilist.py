@@ -495,6 +495,7 @@ def match_to_plex(
             plex_title_clean_without_year]
 
         logger.info('--------------------------------------------------')
+
         if(plex_total_seasons == 1):
             custom_mapping_id = retrieve_custom_mapping(
                 plex_title, plex_total_seasons)
@@ -678,7 +679,7 @@ def match_series_with_seasons(
         plex_watched_episode_count = plexmodule.get_watched_episodes_for_show_season(
             plex_series_all, plex_title, counter_season)
         plex_year = plexmodule.get_season_year(
-            plex_series_all, plex_title, counter_season)
+            plex_series_all, plex_title, counter_season, 1)
         matched_anilist_series = []
         # for first season use regular search (some redundant codecan be merged
         # later)
@@ -850,7 +851,6 @@ def match_series_with_seasons(
                     log_to_file(error_message)
 
         counter_season += 1
-
 
 def update_entry(
         title,
